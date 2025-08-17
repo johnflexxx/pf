@@ -1,0 +1,55 @@
+name: PropertyFinder Scraper
+
+on:
+  workflow_dispatch:
+    inputs:
+      category:
+        description: "buy or rent"
+        required: true
+        default: buy
+      buildings:
+        description: "Comma-separated building names (e.g. 'prive residence, oxford boulevard')"
+        required: true
+      max_pages:
+        description: "Max pages per building"
+        required: true
+        default: "10"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scraper
+        run: |
+          mkdir -p out
+          python fetch_data.py search \
+            --buildings "${{ github.event.inputs.buildings }}" \
+            --category "${{ github.event.inputs.category }}" \
+            --max-pages-per-query "${{ github.event.inputs.max_pages }}" \
+            --out out
+
+      - name: Upload Excel outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pf-output-${{ github.run_id }}
+          path: out/*.xlsx
+          if-no-files-found: warn
+
+      - name: (Optional) Upload JSONL too
+        uses: actions/upload-artifact@v4
+        with:
+          name: pf-jsonl-${{ github.run_id }}
+          path: out/*.jsonl
+          if-no-files-found: ignore
