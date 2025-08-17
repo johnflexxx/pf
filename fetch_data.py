@@ -278,6 +278,7 @@ def save_outputs(basepath: Path, listings: List[Dict]) -> Tuple[Path, Path]:
     # Preferred first:
     preferred = [
         "dld_permit_number",
+        "permit_modified",
         "price_currency",
         "price_value",
         "share_url",
