@@ -260,6 +260,23 @@ def normalize_listing(p: Dict) -> Dict:
         "broker_name": broker.get("name"),
     }
 
+def write_permit_modified_list(basepath: Path, listings: List[Dict]) -> Path:
+    """
+    Writes comma-separated list of unique non-empty 'permit_modified' values.
+    The file sits next to the XLSX/CSV for this building.
+    """
+    seen = set()
+    values = []
+    for row in listings:
+        v = str(row.get("permit_modified") or "").strip()
+        if v and v not in seen:
+            seen.add(v)
+            values.append(v)
+    txt_path = basepath.with_name("permit_modified_list.txt")
+    txt_path.write_text(",".join(values), encoding="utf-8")
+    return txt_path
+
+
 def save_outputs(basepath: Path, listings: List[Dict]) -> Tuple[Path, Path]:
     """
     Saves JSONL + XLSX (with preferred column order).
@@ -270,9 +287,9 @@ def save_outputs(basepath: Path, listings: List[Dict]) -> Tuple[Path, Path]:
     jsonl_path = basepath.with_suffix(".jsonl")
 
     # --- JSONL (unchanged convenience output) ---
-    with jsonl_path.open("w", encoding="utf-8") as f:
-        for row in listings:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    #with jsonl_path.open("w", encoding="utf-8") as f:
+     #   for row in listings:
+      #      f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     # --- Compute column order for XLSX ---
     # Preferred first:
@@ -303,6 +320,7 @@ def save_outputs(basepath: Path, listings: List[Dict]) -> Tuple[Path, Path]:
         ws.append([row.get(k, "") for k in field_order])
 
     wb.save(xlsx_path)
+    write_permit_modified_list(basepath, listings)
     return xlsx_path, jsonl_path
 
 
